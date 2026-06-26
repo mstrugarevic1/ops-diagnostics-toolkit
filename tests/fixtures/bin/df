@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+set -Eeuo pipefail
+
+case "${DF_MODE:-healthy}" in
+healthy)
+    cat <<'EOF'
+Filesystem     Type 1024-blocks Used Available Capacity Mounted on
+/dev/root      ext4 100000      42000 58000     42%      /
+EOF
+    ;;
+warning)
+    cat <<'EOF'
+Filesystem     Type 1024-blocks Used Available Capacity Mounted on
+/dev/root      ext4 100000      83000 17000     83%      /
+EOF
+    ;;
+critical)
+    cat <<'EOF'
+Filesystem     Type 1024-blocks Used Available Capacity Mounted on
+/dev/root      ext4 100000      94000 6000      94%      /
+EOF
+    ;;
+esac

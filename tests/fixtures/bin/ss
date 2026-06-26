@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+set -Eeuo pipefail
+
+if [[ "${SS_MISSING:-0}" == "1" ]]; then
+    printf 'ss intentionally missing\n' >&2
+    exit 127
+fi
+
+args=" $* "
+if [[ "$args" == *" -t "* || "$args" != *" -u "* ]]; then
+    printf 'tcp LISTEN 0 128 127.0.0.1:5432 0.0.0.0:* users:(("postgres",pid=111,fd=7))\n'
+    printf 'tcp LISTEN 0 128 0.0.0.0:22 0.0.0.0:* users:(("sshd",pid=222,fd=3))\n'
+fi
+if [[ "$args" == *" -u "* || "$args" != *" -t "* ]]; then
+    printf 'udp UNCONN 0 0 0.0.0.0:53 0.0.0.0:* \n'
+fi

@@ -1,0 +1,4 @@
+# One hostname or hostname:port per line
+example.com
+api.example.com:443
+internal.example.com:8443

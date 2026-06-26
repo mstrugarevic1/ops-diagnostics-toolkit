@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+set -Eeuo pipefail
+
+if [[ "${JOURNAL_DENIED:-0}" == "1" ]]; then
+    printf 'permission denied\n' >&2
+    exit 1
+fi
+printf 'recent log line\n'

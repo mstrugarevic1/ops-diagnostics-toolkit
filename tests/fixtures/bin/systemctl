@@ -1,0 +1,38 @@
+#!/usr/bin/env bash
+set -Eeuo pipefail
+
+if [[ "${SYSTEMCTL_MISSING:-0}" == "1" ]]; then
+    printf 'systemctl intentionally missing\n' >&2
+    exit 127
+fi
+
+if [[ "${1:-}" == "--failed" ]]; then
+    [[ "${SYSTEMCTL_FAILED_LIST:-0}" == "1" ]] && printf 'bad.service loaded failed failed Bad Service\n'
+    exit 0
+fi
+
+service="${2:-}"
+case "$service" in
+nginx)
+    cat <<'EOF'
+LoadState=loaded
+ActiveState=active
+SubState=running
+MainPID=123
+NRestarts=0
+EOF
+    ;;
+broken)
+    cat <<'EOF'
+LoadState=loaded
+ActiveState=failed
+SubState=failed
+MainPID=0
+NRestarts=3
+EOF
+    ;;
+missing)
+    printf 'Unit missing.service could not be found.\n' >&2
+    exit 1
+    ;;
+esac

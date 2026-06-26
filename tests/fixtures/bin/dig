@@ -1,0 +1,40 @@
+#!/usr/bin/env bash
+set -Eeuo pipefail
+
+mode="${DIG_MODE:-ok}"
+resolver="system"
+for arg in "$@"; do
+    [[ "$arg" == @* ]] && resolver="${arg#@}"
+done
+
+case "$mode" in
+timeout)
+    printf ';; connection timed out; no servers could be reached\n' >&2
+    exit 9
+    ;;
+nxdomain)
+    status="NXDOMAIN"
+    answer=""
+    ;;
+servfail)
+    status="SERVFAIL"
+    answer=""
+    ;;
+diff)
+    status="NOERROR"
+    answer="example.com. 60 IN A 203.0.113.${resolver//./}"
+    ;;
+*)
+    status="NOERROR"
+    answer="example.com. 60 IN A 93.184.216.34"
+    ;;
+esac
+
+cat <<EOF
+;; ->>HEADER<<- opcode: QUERY, status: $status, id: 1
+;; ANSWER SECTION:
+$answer
+;; AUTHORITY SECTION:
+example.com. 60 IN NS ns1.example.com.
+;; Query time: 12 msec
+EOF

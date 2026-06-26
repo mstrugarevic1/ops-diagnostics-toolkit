@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+set -Eeuo pipefail
+
+if [[ "$*" == "-u +%s" ]]; then
+    printf '1782432000\n'
+elif [[ "$*" == *"Jul 15 00:00:00 2026 GMT"* ]]; then
+    printf '1784073600\n'
+elif [[ "$*" == *"Jul 01 00:00:00 2026 GMT"* ]]; then
+    printf '1782864000\n'
+elif [[ "$*" == *"Jun 01 00:00:00 2026 GMT"* ]]; then
+    printf '1780272000\n'
+else
+    printf '1790035200\n'
+fi
