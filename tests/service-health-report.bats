@@ -31,3 +31,9 @@ load helpers/test_helper
     run_script_with_path service-health-report.sh "$MISSING_PATH" nginx --no-color
     [ "$status" -eq 3 ]
 }
+
+@test "systemctl present without systemd exits 3" {
+    SYSTEMCTL_NO_SYSTEMD=1 run_script service-health-report.sh --failed-only --no-color
+    [ "$status" -eq 3 ]
+    [[ "$output" == *"systemd is unavailable"* ]]
+}

@@ -142,13 +142,17 @@ report_service() {
 }
 
 run_failed_only() {
-    local unit exit_code=0
+    local output unit exit_code=0
+    if ! output="$(systemctl --failed --type=service --no-legend --plain 2>&1)"; then
+        printf 'ERROR: systemd is unavailable or systemctl failed: %s\n' "$output" >&2
+        return 3
+    fi
     printf '%-10s %s\n' "STATUS" "SERVICE"
     while IFS= read -r unit; do
         [[ -z "$unit" ]] && continue
         printf '%-10s %s\n' "$(print_status FAILED)" "$unit"
         exit_code=2
-    done < <(systemctl --failed --type=service --no-legend --plain | awk '{print $1}')
+    done < <(awk '{print $1}' <<<"$output")
     return "$exit_code"
 }
 

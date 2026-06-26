@@ -1,1 +1,0 @@
-- Missing-command Bats tests should run the script with a reduced PATH, not fixture binaries that exit 127; otherwise dependency checks are not actually tested.

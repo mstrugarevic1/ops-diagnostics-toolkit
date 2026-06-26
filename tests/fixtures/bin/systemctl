@@ -6,6 +6,12 @@ if [[ "${SYSTEMCTL_MISSING:-0}" == "1" ]]; then
     exit 127
 fi
 
+if [[ "${SYSTEMCTL_NO_SYSTEMD:-0}" == "1" ]]; then
+    printf "System has not been booted with systemd as init system (PID 1). Can't operate.\n" >&2
+    printf "Failed to connect to bus: Host is down\n" >&2
+    exit 1
+fi
+
 if [[ "${1:-}" == "--failed" ]]; then
     [[ "${SYSTEMCTL_FAILED_LIST:-0}" == "1" ]] && printf 'bad.service loaded failed failed Bad Service\n'
     exit 0
