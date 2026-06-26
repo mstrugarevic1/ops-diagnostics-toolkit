@@ -3,6 +3,7 @@ name: CI
 on:
   push:
     branches: [main]
+    tags: ["v*"]
   pull_request:
 
 jobs:
@@ -16,3 +17,26 @@ jobs:
           sudo apt-get install -y shellcheck shfmt bats
       - name: Validate
         run: make validate
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y shellcheck shfmt bats dpkg-dev
+      - name: Check tag matches VERSION
+        run: test "${GITHUB_REF_NAME#v}" = "$(cat VERSION)"
+      - name: Build Debian package
+        run: make package-deb
+      - name: Publish GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" dist/*.deb \
+            --title "$GITHUB_REF_NAME" \
+            --notes "Unofficial Debian package for ops-diagnostics-toolkit. Not affiliated with Debian, Ubuntu, or any Linux distribution vendor."

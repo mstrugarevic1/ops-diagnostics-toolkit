@@ -37,6 +37,26 @@ Package names differ by distribution. On Debian/Ubuntu, `dig` is usually in `dns
 
 ## Install
 
+Download the `.deb` package from the GitHub Releases page, then install it:
+
+```bash
+sudo dpkg -i ops-diagnostics-toolkit_0.1.0_all.deb
+```
+
+The Debian package is unofficial and provided only for convenience. It is not provided by or affiliated with Debian, Ubuntu, or any Linux distribution vendor.
+
+Installed commands keep the script filenames:
+
+```bash
+disk-usage-alert.sh --help
+service-health-report.sh --help
+port-listener-audit.sh --help
+dns-debug.sh --help
+tls-expiry-check.sh --help
+```
+
+You can also run the scripts directly from a clone:
+
 ```bash
 git clone git@github.com:mstrugarevic1/ops-diagnostics-toolkit.git
 cd ops-diagnostics-toolkit
@@ -251,3 +271,14 @@ make validate
 ```
 
 That runs formatting checks, ShellCheck, and the Bats test suite with mocked commands.
+
+## Release
+
+Update `VERSION`, commit the change, and tag the same version:
+
+```bash
+git tag v0.1.0
+git push origin main v0.1.0
+```
+
+The release workflow validates the scripts, builds `dist/ops-diagnostics-toolkit_0.1.0_all.deb`, and uploads it to the GitHub Release for that tag.
