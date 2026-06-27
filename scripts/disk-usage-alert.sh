@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
 
-VERSION="0.3.5"
+VERSION="0.3.6"
 NO_COLOR_FLAG=0
 WARNING=80
 CRITICAL=90
 FILESYSTEM=""
 CHECK_INODES=0
-EXCLUDE_TYPES=("tmpfs" "devtmpfs" "squashfs" "proc" "sysfs" "devfs" "overlay")
+EXCLUDE_TYPES=("tmpfs" "devtmpfs" "squashfs" "proc" "sysfs" "devfs" "overlay" "efivarfs" "cgroup" "cgroup2" "pstore" "securityfs" "debugfs" "tracefs" "configfs" "fusectl" "mqueue" "hugetlbfs" "binfmt_misc" "autofs")
 
 usage() {
     cat <<'EOF'

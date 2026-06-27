@@ -6,6 +6,15 @@ load helpers/test_helper
     TLS_MODE=valid run_script tls-expiry-check.sh example.com --no-color
     [ "$status" -eq 0 ]
     [[ "$output" == *"OK"*"example.com"* ]]
+    [[ "$output" != *"SUBJECT"* ]]
+}
+
+@test "details include certificate metadata" {
+    TLS_MODE=valid run_script tls-expiry-check.sh example.com --details --no-color
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"SUBJECT"*"CN=example.com"* ]]
+    [[ "$output" == *"ISSUER"*"Example CA"* ]]
+    [[ "$output" == *"VERIFY"*"0 (ok)"* ]]
 }
 
 @test "warning expiry exits 1" {

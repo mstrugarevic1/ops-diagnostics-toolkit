@@ -1,17 +1,18 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
 
-VERSION="0.3.5"
+VERSION="0.3.6"
 TARGET_FILE=""
 PORT=443
 WARNING_DAYS=30
 CRITICAL_DAYS=7
 TIMEOUT=10
+DETAILS=0
 TARGETS=()
 
 usage() {
     cat <<'EOF'
-Usage: tls-expiry-check.sh [--file FILE] [--port PORT] [--warning-days DAYS] [--critical-days DAYS] [--timeout SECONDS] [--no-color] [HOST[:PORT]...]
+Usage: tls-expiry-check.sh [--file FILE] [--port PORT] [--warning-days DAYS] [--critical-days DAYS] [--timeout SECONDS] [--details] [--no-color] [HOST[:PORT]...]
 EOF
 }
 
@@ -60,6 +61,10 @@ parse_args() {
             [[ "$#" -ge 2 && "$2" =~ ^[0-9]+$ && "$2" -gt 0 ]] || die "--timeout requires a positive integer"
             TIMEOUT="$2"
             shift 2
+            ;;
+        --details)
+            DETAILS=1
+            shift
             ;;
         --no-color)
             shift
@@ -149,7 +154,9 @@ check_one() {
         status="CRITICAL"
     fi
     printf '%-10s %-22s %-6s %-10s %s\n' "$status" "$TLS_HOST" "$TLS_PORT" "$days" "$not_after"
-    printf 'SUBJECT   %s\nISSUER    %s\nVALIDFROM %s\nVERIFY    %s\n' "${subject:-unknown}" "${issuer:-unknown}" "${not_before:-unknown}" "$(grep -m1 'Verify return code:' <<<"$cert" || printf 'not reported')"
+    if [[ "$DETAILS" -eq 1 ]]; then
+        printf 'SUBJECT   %s\nISSUER    %s\nVALIDFROM %s\nVERIFY    %s\n' "${subject:-unknown}" "${issuer:-unknown}" "${not_before:-unknown}" "$(grep -m1 'Verify return code:' <<<"$cert" || printf 'not reported')"
+    fi
     [[ "$status" == "WARNING" ]] && return 1
     [[ "$status" == "CRITICAL" ]] && return 2
     return 0

@@ -42,7 +42,7 @@ Package names differ by distribution. On Debian/Ubuntu, `dig` is usually in `dns
 Download the `.deb` package from the GitHub Releases page, then install it:
 
 ```bash
-sudo dpkg -i ops-diagnostics-toolkit_0.3.5_all.deb
+sudo dpkg -i ops-diagnostics-toolkit_0.3.6_all.deb
 ```
 
 The Debian package checks for Bash 4.2 or newer during installation. If the installed Bash version is too old, installation stops with an error.
@@ -134,6 +134,8 @@ STATUS     FILESYSTEM              MOUNT              IUSED    IFREE
 OK         /dev/root               /                  42%      58000
 WARNING    /dev/data               /var               83%      17000
 ```
+
+Pseudo and special filesystems such as `tmpfs`, `overlay`, `efivarfs`, `cgroup`, and `debugfs` are excluded by default.
 
 ### Service Health
 
@@ -277,13 +279,30 @@ Set expiry thresholds:
 ./scripts/tls-expiry-check.sh example.com --warning-days 30 --critical-days 7
 ```
 
+Show certificate metadata:
+
+```bash
+./scripts/tls-expiry-check.sh example.com:8443 --details
+```
+
 Example output:
 
 ```text
 STATUS     HOST                   PORT   DAYS LEFT  EXPIRES
-OK         example.com            443    86         Sep 21 00:00:00 2026 GMT
+OK         example.com            443    63         Aug 29 21:41:26 2026 GMT
 WARNING    internal.example       443    18         Jul 15 00:00:00 2026 GMT
 CRITICAL   api.example            8443   4          Jul 01 00:00:00 2026 GMT
+```
+
+Example with `--details`:
+
+```text
+STATUS     HOST                   PORT   DAYS LEFT  EXPIRES
+OK         example.com            8443   63         Aug 29 21:41:26 2026 GMT
+SUBJECT   CN = example.com
+ISSUER    C = US, O = SSL Corporation, CN = Cloudflare TLS Issuing ECC CA 3
+VALIDFROM May 31 21:39:12 2026 GMT
+VERIFY    Verify return code: 0 (ok)
 ```
 
 ### System Pressure
@@ -310,9 +329,12 @@ Example output:
 
 ```text
 STATUS     RESOURCE           VALUE        DETAILS
-OK         load               0.25         0.50 load1 across 2 CPU(s)
-WARNING    memory             90%          97 MiB available
+OK         load               0.04         0.04 load1 across 1 CPU(s)
+OK         memory             24%          726 MiB available
 OK         swap               0%           no swap configured
+OK         cpu_pressure       0.06%        avg10 some pressure
+OK         memory_pressure    0.00%        avg10 some pressure
+OK         io_pressure        0.45%        avg10 some pressure
 OK         oom_kills          none         no recent OOM pattern found
 ```
 
@@ -367,8 +389,8 @@ That runs formatting checks, ShellCheck, and the Bats test suite with mocked com
 Update `VERSION`, commit the change, and tag the same version:
 
 ```bash
-git tag v0.3.5
-git push origin main v0.3.5
+git tag v0.3.6
+git push origin main v0.3.6
 ```
 
-The release workflow validates the scripts, builds `dist/ops-diagnostics-toolkit_0.3.5_all.deb`, and uploads it to the GitHub Release for that tag.
+The release workflow validates the scripts, builds `dist/ops-diagnostics-toolkit_0.3.6_all.deb`, and uploads it to the GitHub Release for that tag.
