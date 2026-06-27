@@ -42,7 +42,7 @@ Package names differ by distribution. On Debian/Ubuntu, `dig` is usually in `dns
 Download the `.deb` package from the GitHub Releases page, then install it:
 
 ```bash
-sudo dpkg -i ops-diagnostics-toolkit_0.3.0_all.deb
+sudo dpkg -i ops-diagnostics-toolkit_0.3.1_all.deb
 ```
 
 The Debian package checks for Bash 4.2 or newer during installation. If the installed Bash version is too old, installation stops with an error.
@@ -368,8 +368,8 @@ That runs formatting checks, ShellCheck, and the Bats test suite with mocked com
 Update `VERSION`, commit the change, and tag the same version:
 
 ```bash
-git tag v0.3.0
-git push origin main v0.3.0
+git tag v0.3.1
+git push origin main v0.3.1
 ```
 
-The release workflow validates the scripts, builds `dist/ops-diagnostics-toolkit_0.3.0_all.deb`, and uploads it to the GitHub Release for that tag.
+The release workflow validates the scripts, builds `dist/ops-diagnostics-toolkit_0.3.1_all.deb`, and uploads it to the GitHub Release for that tag.

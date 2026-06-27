@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
 
-VERSION="0.3.0"
+VERSION="0.3.1"
 TYPE=""
 RESOLVER=""
 COMPARE=0
