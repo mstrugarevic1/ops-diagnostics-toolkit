@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
 
-VERSION="0.3.3"
+VERSION="0.3.4"
 NO_COLOR_FLAG=0
 WARNING=80
 CRITICAL=90
