@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
 
-VERSION="0.3.1"
+VERSION="0.3.2"
 TARGET_FILE=""
 PORT=443
 WARNING_DAYS=30

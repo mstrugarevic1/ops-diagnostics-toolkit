@@ -3,27 +3,28 @@
 load helpers/test_helper
 
 make_pressure_proc() {
-    PRESSURE_PROC="$BATS_TEST_TMPDIR/proc"
-    mkdir -p "$PRESSURE_PROC/pressure"
-    cat >"$PRESSURE_PROC/cpuinfo" <<'EOF'
+    local proc_root="$BATS_TEST_TMPDIR/proc"
+    mkdir -p "$proc_root/pressure"
+    cat >"$proc_root/cpuinfo" <<'EOF'
 processor	: 0
 processor	: 1
 EOF
-    cat >"$PRESSURE_PROC/loadavg" <<'EOF'
+    cat >"$proc_root/loadavg" <<'EOF'
 0.50 0.40 0.30 1/100 123
 EOF
-    cat >"$PRESSURE_PROC/meminfo" <<'EOF'
+    cat >"$proc_root/meminfo" <<'EOF'
 MemTotal:       1000000 kB
 MemAvailable:   500000 kB
 SwapTotal:      200000 kB
 SwapFree:       200000 kB
 EOF
     for name in cpu memory io; do
-        cat >"$PRESSURE_PROC/pressure/$name" <<'EOF'
+        cat >"$proc_root/pressure/$name" <<'EOF'
 some avg10=0.00 avg60=0.00 avg300=0.00 total=0
 full avg10=0.00 avg60=0.00 avg300=0.00 total=0
 EOF
     done
+    printf '%s\n' "$proc_root"
 }
 
 run_pressure() {
@@ -31,7 +32,7 @@ run_pressure() {
 }
 
 @test "healthy system pressure exits 0" {
-    make_pressure_proc
+    PRESSURE_PROC="$(make_pressure_proc)"
     run_pressure --no-color
     [ "$status" -eq 0 ]
     [[ "$output" == *"OK"*"load"* ]]
@@ -39,7 +40,7 @@ run_pressure() {
 }
 
 @test "high load exits critical" {
-    make_pressure_proc
+    PRESSURE_PROC="$(make_pressure_proc)"
     cat >"$PRESSURE_PROC/loadavg" <<'EOF'
 8.00 7.00 6.00 1/100 123
 EOF
@@ -49,7 +50,7 @@ EOF
 }
 
 @test "high memory exits warning" {
-    make_pressure_proc
+    PRESSURE_PROC="$(make_pressure_proc)"
     cat >"$PRESSURE_PROC/meminfo" <<'EOF'
 MemTotal:       1000000 kB
 MemAvailable:   100000 kB
@@ -62,7 +63,7 @@ EOF
 }
 
 @test "high swap exits critical" {
-    make_pressure_proc
+    PRESSURE_PROC="$(make_pressure_proc)"
     cat >"$PRESSURE_PROC/meminfo" <<'EOF'
 MemTotal:       1000000 kB
 MemAvailable:   900000 kB
@@ -87,7 +88,7 @@ EOF
 }
 
 @test "oom pattern exits critical when requested" {
-    make_pressure_proc
+    PRESSURE_PROC="$(make_pressure_proc)"
     OOM_MODE=seen run_pressure --check-oom --no-color
     [ "$status" -eq 2 ]
     [[ "$output" == *"CRITICAL"*"oom_kills"* ]]
