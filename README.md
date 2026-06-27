@@ -42,7 +42,7 @@ Package names differ by distribution. On Debian/Ubuntu, `dig` is usually in `dns
 Download the `.deb` package from the GitHub Releases page, then install it:
 
 ```bash
-sudo dpkg -i ops-diagnostics-toolkit_0.3.6_all.deb
+sudo dpkg -i ops-diagnostics-toolkit_0.3.7_all.deb
 ```
 
 The Debian package checks for Bash 4.2 or newer during installation. If the installed Bash version is too old, installation stops with an error.
@@ -338,7 +338,7 @@ OK         io_pressure        0.45%        avg10 some pressure
 OK         oom_kills          none         no recent OOM pattern found
 ```
 
-PSI and OOM rows are shown only when the signal is available or a problem is detected. Use `--show-unavailable` to include unavailable optional signals as `UNKNOWN`.
+PSI and OOM rows are shown only when the signal is available or a problem is detected. PSI `avg10` values of 50% or higher warn; 90% or higher are critical. Use `--show-unavailable` to include unavailable optional signals as `UNKNOWN`.
 
 ## Exit Codes
 

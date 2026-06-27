@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
 
-VERSION="0.3.6"
+VERSION="0.3.7"
 NO_COLOR_FLAG=0
+COLOR_ENABLED=0
 FAILED_ONLY=0
 LOGS=0
 SERVICE_FILE=""
@@ -25,7 +26,7 @@ need() {
 
 color() {
     local code="$1" text="$2"
-    if [[ "$NO_COLOR_FLAG" -eq 0 && -t 1 && -z "${NO_COLOR+x}" ]]; then
+    if [[ "$COLOR_ENABLED" -eq 1 ]]; then
         printf '\033[%sm%s\033[0m' "$code" "$text"
     else
         printf '%s' "$text"
@@ -79,6 +80,9 @@ parse_args() {
             ;;
         esac
     done
+    if [[ "$NO_COLOR_FLAG" -eq 0 && -t 1 && -z "${NO_COLOR+x}" ]]; then
+        COLOR_ENABLED=1
+    fi
 }
 
 read_services_file() {

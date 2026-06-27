@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
 
-VERSION="0.3.6"
+VERSION="0.3.7"
 NO_COLOR_FLAG=0
+COLOR_ENABLED=0
 WARNING=80
 CRITICAL=90
 FILESYSTEM=""
@@ -26,7 +27,7 @@ need() {
 
 color() {
     local code="$1" text="$2"
-    if [[ "$NO_COLOR_FLAG" -eq 0 && -t 1 && -z "${NO_COLOR+x}" ]]; then
+    if [[ "$COLOR_ENABLED" -eq 1 ]]; then
         printf '\033[%sm%s\033[0m' "$code" "$text"
     else
         printf '%s' "$text"
@@ -92,6 +93,9 @@ parse_args() {
     valid_percent "$WARNING" || die "--warning must be an integer from 0 to 100"
     valid_percent "$CRITICAL" || die "--critical must be an integer from 0 to 100"
     [[ "$WARNING" -lt "$CRITICAL" ]] || die "--warning must be lower than --critical"
+    if [[ "$NO_COLOR_FLAG" -eq 0 && -t 1 && -z "${NO_COLOR+x}" ]]; then
+        COLOR_ENABLED=1
+    fi
 }
 
 is_excluded() {

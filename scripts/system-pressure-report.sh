@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
 
-VERSION="0.3.6"
+VERSION="0.3.7"
 NO_COLOR_FLAG=0
+COLOR_ENABLED=0
 SHOW_UNAVAILABLE=0
 WARNING_LOAD=1.5
 CRITICAL_LOAD=3.0
@@ -10,6 +11,8 @@ WARNING_MEM=85
 CRITICAL_MEM=95
 WARNING_SWAP=50
 CRITICAL_SWAP=80
+WARNING_PSI=50
+CRITICAL_PSI=90
 PROC_ROOT="${OPS_DIAG_PROC_ROOT:-/proc}"
 
 usage() {
@@ -25,7 +28,7 @@ die() {
 
 color() {
     local code="$1" text="$2"
-    if [[ "$NO_COLOR_FLAG" -eq 0 && -t 1 && -z "${NO_COLOR+x}" ]]; then
+    if [[ "$COLOR_ENABLED" -eq 1 ]]; then
         printf '\033[%sm%s\033[0m' "$code" "$text"
     else
         printf '%s' "$text"
@@ -128,6 +131,9 @@ parse_args() {
     ge_number "$CRITICAL_LOAD" "$WARNING_LOAD" || die "--critical-load must be greater than or equal to --warning-load"
     [[ "$WARNING_MEM" -le "$CRITICAL_MEM" ]] || die "--warning-memory must be lower than or equal to --critical-memory"
     [[ "$WARNING_SWAP" -le "$CRITICAL_SWAP" ]] || die "--warning-swap must be lower than or equal to --critical-swap"
+    if [[ "$NO_COLOR_FLAG" -eq 0 && -t 1 && -z "${NO_COLOR+x}" ]]; then
+        COLOR_ENABLED=1
+    fi
 }
 
 emit_row() {
@@ -220,14 +226,21 @@ psi_avg10() {
 }
 
 check_psi_one() {
-    local name="$1" file="$PROC_ROOT/pressure/$1" avg
+    local name="$1" file="$PROC_ROOT/pressure/$1" avg status
     if [[ ! -r "$file" ]]; then
         [[ "$SHOW_UNAVAILABLE" -eq 1 ]] && emit_row UNKNOWN "${name}_pressure" "n/a" "PSI unavailable"
         return 0
     fi
     avg="$(psi_avg10 "$file")"
     [[ -n "$avg" ]] || avg="0.00"
-    emit_row OK "${name}_pressure" "${avg}%" "avg10 some pressure"
+    if ge_number "$avg" "$CRITICAL_PSI"; then
+        status="CRITICAL"
+    elif ge_number "$avg" "$WARNING_PSI"; then
+        status="WARNING"
+    else
+        status="OK"
+    fi
+    emit_row "$status" "${name}_pressure" "${avg}%" "avg10 some pressure"
 }
 
 check_oom() {

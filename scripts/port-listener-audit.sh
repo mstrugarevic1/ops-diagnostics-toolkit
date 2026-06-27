@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
 
-VERSION="0.3.6"
+VERSION="0.3.7"
 TCP=0
 UDP=0
 PORT=""
