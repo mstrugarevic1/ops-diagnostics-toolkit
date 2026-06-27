@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
 
-VERSION="0.3.7"
+VERSION="0.3.8"
 TARGET_FILE=""
 PORT=443
 WARNING_DAYS=30
@@ -12,7 +12,7 @@ TARGETS=()
 
 usage() {
     cat <<'EOF'
-Usage: tls-expiry-check.sh [--file FILE] [--port PORT] [--warning-days DAYS] [--critical-days DAYS] [--timeout SECONDS] [--details] [--no-color] [HOST[:PORT]...]
+Usage: tls-expiry-check.sh [--file FILE] [--port PORT] [--warning-days DAYS] [--critical-days DAYS] [--timeout SECONDS] [--details] [HOST[:PORT]...]
 EOF
 }
 
@@ -64,9 +64,6 @@ parse_args() {
             ;;
         --details)
             DETAILS=1
-            shift
-            ;;
-        --no-color)
             shift
             ;;
         --help)

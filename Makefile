@@ -24,7 +24,7 @@ test:
 
 smoke:
 	./scripts/system-pressure-report.sh --version >/dev/null
-	./scripts/system-pressure-report.sh --no-color >/dev/null
+	./scripts/system-pressure-report.sh >/dev/null
 
 version-check:
 	@for script in $(SCRIPTS); do \

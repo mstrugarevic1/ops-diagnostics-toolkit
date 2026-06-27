@@ -1,9 +1,7 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
 
-VERSION="0.3.7"
-NO_COLOR_FLAG=0
-COLOR_ENABLED=0
+VERSION="0.3.8"
 FAILED_ONLY=0
 LOGS=0
 SERVICE_FILE=""
@@ -11,7 +9,7 @@ SERVICES=()
 
 usage() {
     cat <<'EOF'
-Usage: service-health-report.sh [--file FILE] [--failed-only] [--logs NUMBER] [--no-color] [SERVICE...]
+Usage: service-health-report.sh [--file FILE] [--failed-only] [--logs NUMBER] [SERVICE...]
 EOF
 }
 
@@ -22,24 +20,6 @@ die() {
 
 need() {
     command -v "$1" >/dev/null 2>&1 || die "missing required command: $1"
-}
-
-color() {
-    local code="$1" text="$2"
-    if [[ "$COLOR_ENABLED" -eq 1 ]]; then
-        printf '\033[%sm%s\033[0m' "$code" "$text"
-    else
-        printf '%s' "$text"
-    fi
-}
-
-print_status() {
-    local status="$1"
-    case "$status" in
-    OK) color 32 "$status" ;;
-    FAILED | NOT_FOUND) color 31 "$status" ;;
-    INACTIVE | UNKNOWN) color 33 "$status" ;;
-    esac
 }
 
 parse_args() {
@@ -59,10 +39,6 @@ parse_args() {
             LOGS="$2"
             shift 2
             ;;
-        --no-color)
-            NO_COLOR_FLAG=1
-            shift
-            ;;
         --help)
             usage
             exit 0
@@ -80,9 +56,6 @@ parse_args() {
             ;;
         esac
     done
-    if [[ "$NO_COLOR_FLAG" -eq 0 && -t 1 && -z "${NO_COLOR+x}" ]]; then
-        COLOR_ENABLED=1
-    fi
 }
 
 read_services_file() {
@@ -140,7 +113,7 @@ report_service() {
     fi
     status="$(status_for "${load:-unknown}" "${active:-unknown}")"
     [[ "$status" == "FAILED" || "$status" == "NOT_FOUND" ]] && code=2
-    printf '%-10s %-24s %-12s %-12s %-12s %-8s %s\n' "$(print_status "$status")" "$service" "${load:-unknown}" "${active:-unknown}" "${sub:-unknown}" "${pid:-0}" "${restart:-0}"
+    printf '%-10s %-24s %-12s %-12s %-12s %-8s %s\n' "$status" "$service" "${load:-unknown}" "${active:-unknown}" "${sub:-unknown}" "${pid:-0}" "${restart:-0}"
     show_logs "$service"
     return "$code"
 }
@@ -154,7 +127,7 @@ run_failed_only() {
     printf '%-10s %s\n' "STATUS" "SERVICE"
     while IFS= read -r unit; do
         [[ -z "$unit" ]] && continue
-        printf '%-10s %s\n' "$(print_status FAILED)" "$unit"
+        printf '%-10s %s\n' "FAILED" "$unit"
         exit_code=2
     done < <(awk '{print $1}' <<<"$output")
     return "$exit_code"

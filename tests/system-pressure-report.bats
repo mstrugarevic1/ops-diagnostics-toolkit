@@ -33,7 +33,7 @@ run_pressure() {
 
 @test "healthy system pressure exits 0" {
     PRESSURE_PROC="$(make_pressure_proc)"
-    run_pressure --no-color
+    run_pressure
     [ "$status" -eq 0 ]
     [[ "$output" == *"OK"*"cpu_pressure"*"0.00%"* ]]
 }
@@ -44,12 +44,12 @@ run_pressure() {
 some avg10=96.78 avg60=0.00 avg300=0.00 total=0
 full avg10=0.00 avg60=0.00 avg300=0.00 total=0
 EOF
-    run_pressure --no-color
+    run_pressure
     [ "$status" -eq 2 ]
     [[ "$output" == *"CRITICAL"*"cpu_pressure"*"96.78%"* ]]
 }
 
 @test "invalid thresholds exit 3" {
-    run_script system-pressure-report.sh --warning-load bad --no-color
+    run_script system-pressure-report.sh --warning-load bad
     [ "$status" -eq 3 ]
 }

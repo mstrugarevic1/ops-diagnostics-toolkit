@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
 
-VERSION="0.3.7"
+VERSION="0.3.8"
 TYPE=""
 RESOLVER=""
 COMPARE=0
@@ -12,7 +12,7 @@ SUPPORTED_TYPES=" A AAAA CNAME NS MX TXT SOA "
 
 usage() {
     cat <<'EOF'
-Usage: dns-debug.sh HOSTNAME [--type TYPE] [--resolver ADDRESS] [--compare-resolvers] [--timeout SECONDS] [--no-color]
+Usage: dns-debug.sh HOSTNAME [--type TYPE] [--resolver ADDRESS] [--compare-resolvers] [--timeout SECONDS]
 EOF
 }
 
@@ -50,9 +50,6 @@ parse_args() {
             [[ "$#" -ge 2 && "$2" =~ ^[0-9]+$ && "$2" -gt 0 ]] || die "--timeout requires a positive integer"
             TIMEOUT="$2"
             shift 2
-            ;;
-        --no-color)
-            shift
             ;;
         --help)
             usage

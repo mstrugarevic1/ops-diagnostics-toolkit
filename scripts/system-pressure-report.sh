@@ -1,9 +1,7 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
 
-VERSION="0.3.7"
-NO_COLOR_FLAG=0
-COLOR_ENABLED=0
+VERSION="0.3.8"
 SHOW_UNAVAILABLE=0
 WARNING_LOAD=1.5
 CRITICAL_LOAD=3.0
@@ -17,32 +15,13 @@ PROC_ROOT="${OPS_DIAG_PROC_ROOT:-/proc}"
 
 usage() {
     cat <<'EOF'
-Usage: system-pressure-report.sh [--warning-load RATIO] [--critical-load RATIO] [--warning-memory PERCENT] [--critical-memory PERCENT] [--warning-swap PERCENT] [--critical-swap PERCENT] [--show-unavailable] [--check-oom] [--no-color]
+Usage: system-pressure-report.sh [--warning-load RATIO] [--critical-load RATIO] [--warning-memory PERCENT] [--critical-memory PERCENT] [--warning-swap PERCENT] [--critical-swap PERCENT] [--show-unavailable] [--check-oom]
 EOF
 }
 
 die() {
     printf 'ERROR: %s\n' "$1" >&2
     exit 3
-}
-
-color() {
-    local code="$1" text="$2"
-    if [[ "$COLOR_ENABLED" -eq 1 ]]; then
-        printf '\033[%sm%s\033[0m' "$code" "$text"
-    else
-        printf '%s' "$text"
-    fi
-}
-
-print_status() {
-    local status="$1"
-    case "$status" in
-    OK) color 32 "$status" ;;
-    WARNING) color 33 "$status" ;;
-    CRITICAL) color 31 "$status" ;;
-    UNKNOWN) color 33 "$status" ;;
-    esac
 }
 
 status_code() {
@@ -111,10 +90,6 @@ parse_args() {
         --check-oom)
             shift
             ;;
-        --no-color)
-            NO_COLOR_FLAG=1
-            shift
-            ;;
         --help)
             usage
             exit 0
@@ -131,9 +106,6 @@ parse_args() {
     ge_number "$CRITICAL_LOAD" "$WARNING_LOAD" || die "--critical-load must be greater than or equal to --warning-load"
     [[ "$WARNING_MEM" -le "$CRITICAL_MEM" ]] || die "--warning-memory must be lower than or equal to --critical-memory"
     [[ "$WARNING_SWAP" -le "$CRITICAL_SWAP" ]] || die "--warning-swap must be lower than or equal to --critical-swap"
-    if [[ "$NO_COLOR_FLAG" -eq 0 && -t 1 && -z "${NO_COLOR+x}" ]]; then
-        COLOR_ENABLED=1
-    fi
 }
 
 emit_row() {
@@ -143,7 +115,7 @@ emit_row() {
     if ((code > EXIT_CODE)); then
         EXIT_CODE="$code"
     fi
-    printf '%-10s %-18s %-12s %s\n' "$(print_status "$status")" "$resource" "$value" "$details"
+    printf '%-10s %-18s %-12s %s\n' "$status" "$resource" "$value" "$details"
 }
 
 cpu_count() {

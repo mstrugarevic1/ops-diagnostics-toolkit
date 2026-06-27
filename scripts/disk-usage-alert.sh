@@ -1,9 +1,7 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
 
-VERSION="0.3.7"
-NO_COLOR_FLAG=0
-COLOR_ENABLED=0
+VERSION="0.3.8"
 WARNING=80
 CRITICAL=90
 FILESYSTEM=""
@@ -12,7 +10,7 @@ EXCLUDE_TYPES=("tmpfs" "devtmpfs" "squashfs" "proc" "sysfs" "devfs" "overlay" "e
 
 usage() {
     cat <<'EOF'
-Usage: disk-usage-alert.sh [--warning PERCENT] [--critical PERCENT] [--filesystem PATH] [--exclude-type TYPE] [--inodes] [--no-color]
+Usage: disk-usage-alert.sh [--warning PERCENT] [--critical PERCENT] [--filesystem PATH] [--exclude-type TYPE] [--inodes]
 EOF
 }
 
@@ -23,15 +21,6 @@ die() {
 
 need() {
     command -v "$1" >/dev/null 2>&1 || die "missing required command: $1"
-}
-
-color() {
-    local code="$1" text="$2"
-    if [[ "$COLOR_ENABLED" -eq 1 ]]; then
-        printf '\033[%sm%s\033[0m' "$code" "$text"
-    else
-        printf '%s' "$text"
-    fi
 }
 
 status_code() {
@@ -73,10 +62,6 @@ parse_args() {
             CHECK_INODES=1
             shift
             ;;
-        --no-color)
-            NO_COLOR_FLAG=1
-            shift
-            ;;
         --help)
             usage
             exit 0
@@ -93,9 +78,6 @@ parse_args() {
     valid_percent "$WARNING" || die "--warning must be an integer from 0 to 100"
     valid_percent "$CRITICAL" || die "--critical must be an integer from 0 to 100"
     [[ "$WARNING" -lt "$CRITICAL" ]] || die "--warning must be lower than --critical"
-    if [[ "$NO_COLOR_FLAG" -eq 0 && -t 1 && -z "${NO_COLOR+x}" ]]; then
-        COLOR_ENABLED=1
-    fi
 }
 
 is_excluded() {
@@ -104,15 +86,6 @@ is_excluded() {
         [[ "$type" == "$excluded" ]] && return 0
     done
     return 1
-}
-
-print_status() {
-    local status="$1"
-    case "$status" in
-    OK) color 32 "$status" ;;
-    WARNING) color 33 "$status" ;;
-    CRITICAL) color 31 "$status" ;;
-    esac
 }
 
 run_check() {
@@ -161,7 +134,7 @@ process_df_output() {
         fi
         code="$(status_code "$status")"
         ((code > highest_code)) && highest_code="$code"
-        printf '%-10s %-22s %-18s %-8s %s\n' "$(print_status "$status")" "$fs" "$mount" "$pct" "$avail"
+        printf '%-10s %-22s %-18s %-8s %s\n' "$status" "$fs" "$mount" "$pct" "$avail"
     done <<<"$df_output"
     return "$highest_code"
 }

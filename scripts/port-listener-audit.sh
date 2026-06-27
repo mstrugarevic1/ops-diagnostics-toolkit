@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
 
-VERSION="0.3.7"
+VERSION="0.3.8"
 TCP=0
 UDP=0
 PORT=""
@@ -14,7 +14,7 @@ IPV6_ALL_INTERFACES_COUNT=0
 
 usage() {
     cat <<'EOF'
-Usage: port-listener-audit.sh [--tcp] [--udp] [--port PORT] [--processes] [--all-interfaces-only] [--no-color]
+Usage: port-listener-audit.sh [--tcp] [--udp] [--port PORT] [--processes] [--all-interfaces-only]
 EOF
 }
 
@@ -45,9 +45,6 @@ parse_args() {
             ;;
         --all-interfaces-only)
             ALL_INTERFACES_ONLY=1
-            shift
-            ;;
-        --no-color)
             shift
             ;;
         --help)
