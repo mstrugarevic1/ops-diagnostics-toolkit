@@ -152,7 +152,7 @@ check_load() {
     }
     read -r load _ <"$PROC_ROOT/loadavg"
     cpus="$(cpu_count)"
-    ratio="$(awk -v load="$load" -v cpus="$cpus" 'BEGIN { printf "%.2f", load / cpus }')"
+    ratio="$(awk -v loadavg="$load" -v cpus="$cpus" 'BEGIN { printf "%.2f", loadavg / cpus }')"
     if ge_number "$ratio" "$CRITICAL_LOAD"; then
         status="CRITICAL"
     elif ge_number "$ratio" "$WARNING_LOAD"; then
