@@ -9,6 +9,7 @@ Small, read-only Bash scripts for Linux system and network diagnostics.
 | `port-listener-audit.sh` | Listening socket inventory |
 | `dns-debug.sh` | DNS resolution diagnostics |
 | `tls-expiry-check.sh` | TLS certificate expiry checks |
+| `system-pressure-report.sh` | Host resource pressure summary |
 
 ## Platform
 
@@ -32,6 +33,7 @@ Install only the tools needed for the scripts you plan to run.
 | `port-listener-audit.sh` | `ss` or `netstat` |
 | `dns-debug.sh` | `dig` |
 | `tls-expiry-check.sh` | `openssl`, `timeout`, GNU `date` |
+| `system-pressure-report.sh` | `/proc`, optional `dmesg` or `journalctl` for OOM checks |
 
 Package names differ by distribution. On Debian/Ubuntu, `dig` is usually in `dnsutils`; on Red Hat-like systems it is usually in `bind-utils`.
 
@@ -40,7 +42,7 @@ Package names differ by distribution. On Debian/Ubuntu, `dig` is usually in `dns
 Download the `.deb` package from the GitHub Releases page, then install it:
 
 ```bash
-sudo dpkg -i ops-diagnostics-toolkit_0.2.0_all.deb
+sudo dpkg -i ops-diagnostics-toolkit_0.3.0_all.deb
 ```
 
 The Debian package checks for Bash 4.2 or newer during installation. If the installed Bash version is too old, installation stops with an error.
@@ -57,6 +59,7 @@ service-health-report --help
 port-listener-audit --help
 dns-debug --help
 tls-expiry-check --help
+system-pressure-report --help
 ```
 
 Backward-compatible `.sh` command names are also installed:
@@ -67,6 +70,7 @@ service-health-report.sh --help
 port-listener-audit.sh --help
 dns-debug.sh --help
 tls-expiry-check.sh --help
+system-pressure-report.sh --help
 ```
 
 You can also run the scripts directly from a clone:
@@ -282,6 +286,39 @@ WARNING    internal.example       443    18         Jul 15 00:00:00 2026 GMT
 CRITICAL   api.example            8443   4          Jul 01 00:00:00 2026 GMT
 ```
 
+### System Pressure
+
+Summarize host load, memory, swap, and Linux PSI pressure:
+
+```bash
+./scripts/system-pressure-report.sh
+```
+
+Use custom load thresholds. Load is evaluated as load average divided by CPU count:
+
+```bash
+./scripts/system-pressure-report.sh --warning-load 1.5 --critical-load 3.0
+```
+
+Optionally check recent kernel logs for OOM-kill patterns:
+
+```bash
+./scripts/system-pressure-report.sh --check-oom
+```
+
+Example output:
+
+```text
+STATUS     RESOURCE           VALUE        DETAILS
+OK         load               0.25         0.50 load1 across 2 CPU(s)
+WARNING    memory             90%          97 MiB available
+OK         swap               0%           no swap configured
+OK         cpu_pressure       0.00%        avg10 some pressure
+OK         memory_pressure    0.00%        avg10 some pressure
+OK         io_pressure        0.00%        avg10 some pressure
+CRITICAL   oom_kills          seen         OOM pattern found in kernel logs
+```
+
 ## Exit Codes
 
 | Code | Meaning |
@@ -331,8 +368,8 @@ That runs formatting checks, ShellCheck, and the Bats test suite with mocked com
 Update `VERSION`, commit the change, and tag the same version:
 
 ```bash
-git tag v0.2.0
-git push origin main v0.2.0
+git tag v0.3.0
+git push origin main v0.3.0
 ```
 
-The release workflow validates the scripts, builds `dist/ops-diagnostics-toolkit_0.2.0_all.deb`, and uploads it to the GitHub Release for that tag.
+The release workflow validates the scripts, builds `dist/ops-diagnostics-toolkit_0.3.0_all.deb`, and uploads it to the GitHub Release for that tag.

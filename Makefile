@@ -47,7 +47,7 @@ package-deb: validate
 		'Recommends: dnsutils, iproute2, openssl, systemd' \
 		'Homepage: https://github.com/mstrugarevic1/ops-diagnostics-toolkit' \
 		'Description: Read-only Linux operations diagnostics toolkit' \
-		' Small Bash scripts for filesystem, systemd, socket, DNS, and TLS diagnostics.' \
+		' Small Bash scripts for filesystem, systemd, socket, DNS, TLS, and host pressure diagnostics.' \
 		' This is an unofficial convenience package, not affiliated with Debian, Ubuntu, or any Linux distribution vendor.' \
 		>$(DEB_ROOT)/DEBIAN/control
 	printf '%s\n' \
