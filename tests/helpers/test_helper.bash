@@ -1,6 +1,10 @@
 #!/usr/bin/env bash
 
 setup() {
+    if [[ -z "${BATS_TEST_TMPDIR:-}" ]]; then
+        export BATS_TEST_TMPDIR
+        BATS_TEST_TMPDIR="$(mktemp -d)"
+    fi
     export PATH="$BATS_TEST_DIRNAME/fixtures/bin:$PATH"
     export PROJECT_ROOT="$BATS_TEST_DIRNAME/.."
 }
