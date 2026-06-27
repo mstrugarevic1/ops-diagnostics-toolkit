@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
 
-VERSION="0.3.4"
+VERSION="0.3.5"
 NO_COLOR_FLAG=0
 FAILED_ONLY=0
 LOGS=0

@@ -42,7 +42,7 @@ Package names differ by distribution. On Debian/Ubuntu, `dig` is usually in `dns
 Download the `.deb` package from the GitHub Releases page, then install it:
 
 ```bash
-sudo dpkg -i ops-diagnostics-toolkit_0.3.4_all.deb
+sudo dpkg -i ops-diagnostics-toolkit_0.3.5_all.deb
 ```
 
 The Debian package checks for Bash 4.2 or newer during installation. If the installed Bash version is too old, installation stops with an error.
@@ -288,7 +288,7 @@ CRITICAL   api.example            8443   4          Jul 01 00:00:00 2026 GMT
 
 ### System Pressure
 
-Summarize host load, memory, swap, and Linux PSI pressure:
+Summarize host load, memory, swap, available Linux PSI pressure, and OOM-kill signals:
 
 ```bash
 ./scripts/system-pressure-report.sh
@@ -300,10 +300,10 @@ Use custom load thresholds. Load is evaluated as load average divided by CPU cou
 ./scripts/system-pressure-report.sh --warning-load 1.5 --critical-load 3.0
 ```
 
-Optionally check recent kernel logs for OOM-kill patterns:
+Show unavailable optional signals such as PSI or kernel logs:
 
 ```bash
-./scripts/system-pressure-report.sh --check-oom
+./scripts/system-pressure-report.sh --show-unavailable
 ```
 
 Example output:
@@ -313,11 +313,10 @@ STATUS     RESOURCE           VALUE        DETAILS
 OK         load               0.25         0.50 load1 across 2 CPU(s)
 WARNING    memory             90%          97 MiB available
 OK         swap               0%           no swap configured
-OK         cpu_pressure       0.00%        avg10 some pressure
-OK         memory_pressure    0.00%        avg10 some pressure
-OK         io_pressure        0.00%        avg10 some pressure
-CRITICAL   oom_kills          seen         OOM pattern found in kernel logs
+OK         oom_kills          none         no recent OOM pattern found
 ```
+
+PSI and OOM rows are shown only when the signal is available or a problem is detected. Use `--show-unavailable` to include unavailable optional signals as `UNKNOWN`.
 
 ## Exit Codes
 
@@ -368,8 +367,8 @@ That runs formatting checks, ShellCheck, and the Bats test suite with mocked com
 Update `VERSION`, commit the change, and tag the same version:
 
 ```bash
-git tag v0.3.4
-git push origin main v0.3.4
+git tag v0.3.5
+git push origin main v0.3.5
 ```
 
-The release workflow validates the scripts, builds `dist/ops-diagnostics-toolkit_0.3.4_all.deb`, and uploads it to the GitHub Release for that tag.
+The release workflow validates the scripts, builds `dist/ops-diagnostics-toolkit_0.3.5_all.deb`, and uploads it to the GitHub Release for that tag.

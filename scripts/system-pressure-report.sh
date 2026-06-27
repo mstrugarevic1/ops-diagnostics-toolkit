@@ -1,20 +1,20 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
 
-VERSION="0.3.4"
+VERSION="0.3.5"
 NO_COLOR_FLAG=0
+SHOW_UNAVAILABLE=0
 WARNING_LOAD=1.5
 CRITICAL_LOAD=3.0
 WARNING_MEM=85
 CRITICAL_MEM=95
 WARNING_SWAP=50
 CRITICAL_SWAP=80
-CHECK_OOM=0
 PROC_ROOT="${OPS_DIAG_PROC_ROOT:-/proc}"
 
 usage() {
     cat <<'EOF'
-Usage: system-pressure-report.sh [--warning-load RATIO] [--critical-load RATIO] [--warning-memory PERCENT] [--critical-memory PERCENT] [--warning-swap PERCENT] [--critical-swap PERCENT] [--check-oom] [--no-color]
+Usage: system-pressure-report.sh [--warning-load RATIO] [--critical-load RATIO] [--warning-memory PERCENT] [--critical-memory PERCENT] [--warning-swap PERCENT] [--critical-swap PERCENT] [--show-unavailable] [--check-oom] [--no-color]
 EOF
 }
 
@@ -101,8 +101,11 @@ parse_args() {
             CRITICAL_SWAP="$2"
             shift 2
             ;;
+        --show-unavailable)
+            SHOW_UNAVAILABLE=1
+            shift
+            ;;
         --check-oom)
-            CHECK_OOM=1
             shift
             ;;
         --no-color)
@@ -219,8 +222,8 @@ psi_avg10() {
 check_psi_one() {
     local name="$1" file="$PROC_ROOT/pressure/$1" avg
     if [[ ! -r "$file" ]]; then
-        emit_row UNKNOWN "${name}_pressure" "n/a" "PSI unavailable"
-        return
+        [[ "$SHOW_UNAVAILABLE" -eq 1 ]] && emit_row UNKNOWN "${name}_pressure" "n/a" "PSI unavailable"
+        return 0
     fi
     avg="$(psi_avg10 "$file")"
     [[ -n "$avg" ]] || avg="0.00"
@@ -229,7 +232,6 @@ check_psi_one() {
 
 check_oom() {
     local logs=""
-    [[ "$CHECK_OOM" -eq 1 ]] || return 0
     if command -v dmesg >/dev/null 2>&1; then
         logs="$(dmesg 2>/dev/null || true)"
     fi
@@ -237,7 +239,8 @@ check_oom() {
         logs="$(journalctl -k -n 200 --no-pager 2>/dev/null || true)"
     fi
     if [[ -z "$logs" ]]; then
-        emit_row UNKNOWN oom_kills "n/a" "kernel logs unavailable"
+        [[ "$SHOW_UNAVAILABLE" -eq 1 ]] && emit_row UNKNOWN oom_kills "n/a" "kernel logs unavailable"
+        return 0
     elif grep -Eiq 'out of memory|oom-kill|killed process' <<<"$logs"; then
         emit_row CRITICAL oom_kills "seen" "OOM pattern found in kernel logs"
     else
