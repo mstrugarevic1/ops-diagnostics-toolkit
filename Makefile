@@ -5,7 +5,7 @@ PACKAGE := ops-diagnostics-toolkit
 DEB_ROOT := build/$(PACKAGE)_$(VERSION)_all
 DEB := dist/$(PACKAGE)_$(VERSION)_all.deb
 
-.PHONY: install-dev format format-check lint test validate package-deb clean
+.PHONY: install-dev format format-check lint test version-check validate package-deb clean
 
 install-dev:
 	@printf '%s\n' 'Install shellcheck, shfmt, bats, and dpkg-deb with your OS package manager.'
@@ -22,12 +22,18 @@ lint:
 test:
 	bats $(TESTS)
 
-validate: format-check lint test
+version-check:
+	@for script in $(SCRIPTS); do \
+		grep -q 'VERSION="$(VERSION)"' "$$script" || { printf '%s\n' "$$script version does not match VERSION"; exit 1; }; \
+	done
+
+validate: format-check lint test version-check
 
 package-deb: validate
 	rm -rf build dist
 	mkdir -p dist $(DEB_ROOT)/DEBIAN $(DEB_ROOT)/usr/bin $(DEB_ROOT)/usr/share/doc/$(PACKAGE) $(DEB_ROOT)/usr/share/doc/$(PACKAGE)/examples
 	install -m 0755 scripts/*.sh $(DEB_ROOT)/usr/bin/
+	for script in scripts/*.sh; do ln -s "$$(basename "$$script")" "$(DEB_ROOT)/usr/bin/$$(basename "$$script" .sh)"; done
 	install -m 0644 README.md LICENSE VERSION $(DEB_ROOT)/usr/share/doc/$(PACKAGE)/
 	install -m 0644 config/*.example.txt $(DEB_ROOT)/usr/share/doc/$(PACKAGE)/examples/
 	printf '%s\n' \
@@ -44,6 +50,20 @@ package-deb: validate
 		' Small Bash scripts for filesystem, systemd, socket, DNS, and TLS diagnostics.' \
 		' This is an unofficial convenience package, not affiliated with Debian, Ubuntu, or any Linux distribution vendor.' \
 		>$(DEB_ROOT)/DEBIAN/control
+	printf '%s\n' \
+		'#!/bin/sh' \
+		'set -e' \
+		'if ! command -v bash >/dev/null 2>&1; then' \
+		'    printf "%s\n" "ERROR: ops-diagnostics-toolkit requires Bash 4.2 or newer." >&2' \
+		'    exit 1' \
+		'fi' \
+		'if ! bash -c '"'"'(( BASH_VERSINFO[0] > 4 || (BASH_VERSINFO[0] == 4 && BASH_VERSINFO[1] >= 2) ))'"'"'; then' \
+		'    printf "%s\n" "ERROR: ops-diagnostics-toolkit requires Bash 4.2 or newer." >&2' \
+		'    exit 1' \
+		'fi' \
+		'exit 0' \
+		>$(DEB_ROOT)/DEBIAN/preinst
+	chmod 0755 $(DEB_ROOT)/DEBIAN/preinst
 	dpkg-deb --build --root-owner-group $(DEB_ROOT) $(DEB)
 
 clean:

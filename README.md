@@ -40,12 +40,26 @@ Package names differ by distribution. On Debian/Ubuntu, `dig` is usually in `dns
 Download the `.deb` package from the GitHub Releases page, then install it:
 
 ```bash
-sudo dpkg -i ops-diagnostics-toolkit_0.1.0_all.deb
+sudo dpkg -i ops-diagnostics-toolkit_0.2.0_all.deb
 ```
+
+The Debian package checks for Bash 4.2 or newer during installation. If the installed Bash version is too old, installation stops with an error.
 
 The Debian package is unofficial and provided only for convenience. It is not provided by or affiliated with Debian, Ubuntu, or any Linux distribution vendor.
 
-Installed commands keep the script filenames:
+No warranty is provided. Use these scripts at your own risk. They are read-only diagnostics, but output can be incomplete, wrong, or misleading if system commands are missing, permissions are limited, or the host is in an unusual state.
+
+Installed commands are available without the `.sh` suffix:
+
+```bash
+disk-usage-alert --help
+service-health-report --help
+port-listener-audit --help
+dns-debug --help
+tls-expiry-check --help
+```
+
+Backward-compatible `.sh` command names are also installed:
 
 ```bash
 disk-usage-alert.sh --help
@@ -99,12 +113,22 @@ Check one mount path:
 ./scripts/disk-usage-alert.sh --filesystem /
 ```
 
+Include inode usage:
+
+```bash
+./scripts/disk-usage-alert.sh --inodes
+```
+
 Example output:
 
 ```text
 STATUS     FILESYSTEM              MOUNT              USED     AVAILABLE
-OK         /dev/root               /                  42%      58G
-WARNING    /dev/data               /var               83%      9G
+OK         /dev/root               /                  42%      57G
+WARNING    /dev/data               /var               83%      17G
+
+STATUS     FILESYSTEM              MOUNT              IUSED    IFREE
+OK         /dev/root               /                  42%      58000
+WARNING    /dev/data               /var               83%      17000
 ```
 
 ### Service Health
@@ -133,6 +157,15 @@ Include recent logs:
 ./scripts/service-health-report.sh nginx --logs 5
 ```
 
+Example output:
+
+```text
+STATUS     SERVICE                  LOAD         ACTIVE       SUB          PID      RESTARTS
+OK         nginx                    loaded       active       running      1234     0
+FAILED     worker.service           loaded       failed       failed       0        3
+NOT_FOUND  missing.service          not-found    unknown      -            -        -
+```
+
 If `systemctl` exists but the machine was not booted with systemd, the script exits `3` with a clear error.
 
 ### Port Listener Audit
@@ -157,12 +190,21 @@ Filter by protocol or port:
 ./scripts/port-listener-audit.sh --port 443
 ```
 
+Show only listeners bound to all interfaces:
+
+```bash
+./scripts/port-listener-audit.sh --all-interfaces-only
+```
+
 Example output:
 
 ```text
 PROTOCOL   ADDRESS            PORT    PID      PROCESS        BINDING
 tcp        127.0.0.1          5432    111      postgres       LOOPBACK
 tcp        0.0.0.0            22      222      sshd           ALL_INTERFACES
+udp        0.0.0.0            53      -        -              ALL_INTERFACES
+
+SUMMARY   LOOPBACK=1 ALL_INTERFACES=2 SPECIFIC_INTERFACE=0 IPV6_ALL_INTERFACES=0
 ```
 
 Binding to all interfaces does not prove the port is reachable from the internet. Firewalls, routing, NAT, and cloud security rules still matter.
@@ -191,6 +233,16 @@ Compare system resolver, Cloudflare, and Google:
 
 ```bash
 ./scripts/dns-debug.sh example.com --compare-resolvers
+```
+
+Example output:
+
+```text
+STATUS     TYPE     RESOLVER         QUERY_TIME
+NOERROR    A        system           20 msec
+example.com.        60      IN      A       93.184.216.34
+AUTHORITY
+example.com.        60      IN      NS      ns1.example.com.
 ```
 
 Different DNS answers are not automatically a failure. CDN, geo-aware, round-robin, and cached DNS responses can legitimately differ.
@@ -264,6 +316,8 @@ These scripts are diagnostic and read-only. They do not:
 
 Results should be interpreted in operational context. This toolkit does not replace monitoring, alerting, incident response tooling, or security scanners.
 
+This software is provided without warranty. The authors and maintainers are not responsible for operational decisions, outages, data loss, security incidents, or other damage resulting from use or misuse of the toolkit.
+
 ## Test Locally
 
 ```bash
@@ -277,8 +331,8 @@ That runs formatting checks, ShellCheck, and the Bats test suite with mocked com
 Update `VERSION`, commit the change, and tag the same version:
 
 ```bash
-git tag v0.1.0
-git push origin main v0.1.0
+git tag v0.2.0
+git push origin main v0.2.0
 ```
 
-The release workflow validates the scripts, builds `dist/ops-diagnostics-toolkit_0.1.0_all.deb`, and uploads it to the GitHub Release for that tag.
+The release workflow validates the scripts, builds `dist/ops-diagnostics-toolkit_0.2.0_all.deb`, and uploads it to the GitHub Release for that tag.

@@ -1,15 +1,20 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
 
-VERSION="0.1.0"
+VERSION="0.2.0"
 TCP=0
 UDP=0
 PORT=""
 PROCESSES=0
+ALL_INTERFACES_ONLY=0
+LOOPBACK_COUNT=0
+ALL_INTERFACES_COUNT=0
+SPECIFIC_INTERFACE_COUNT=0
+IPV6_ALL_INTERFACES_COUNT=0
 
 usage() {
     cat <<'EOF'
-Usage: port-listener-audit.sh [--tcp] [--udp] [--port PORT] [--processes] [--no-color]
+Usage: port-listener-audit.sh [--tcp] [--udp] [--port PORT] [--processes] [--all-interfaces-only] [--no-color]
 EOF
 }
 
@@ -36,6 +41,10 @@ parse_args() {
             ;;
         --processes)
             PROCESSES=1
+            shift
+            ;;
+        --all-interfaces-only)
+            ALL_INTERFACES_ONLY=1
             shift
             ;;
         --no-color)
@@ -94,6 +103,29 @@ process_pid() {
     fi
 }
 
+count_binding() {
+    case "$1" in
+    LOOPBACK) ((LOOPBACK_COUNT += 1)) ;;
+    ALL_INTERFACES) ((ALL_INTERFACES_COUNT += 1)) ;;
+    SPECIFIC_INTERFACE) ((SPECIFIC_INTERFACE_COUNT += 1)) ;;
+    IPV6_ALL_INTERFACES) ((IPV6_ALL_INTERFACES_COUNT += 1)) ;;
+    esac
+}
+
+print_listener() {
+    local proto="$1" address="$2" port="$3" pid="$4" process="$5" binding="$6"
+    if [[ "$ALL_INTERFACES_ONLY" -eq 1 && "$binding" != "ALL_INTERFACES" && "$binding" != "IPV6_ALL_INTERFACES" ]]; then
+        return 0
+    fi
+    count_binding "$binding"
+    printf '%-10s %-18s %-7s %-8s %-14s %s\n' "$proto" "$address" "$port" "$pid" "$process" "$binding"
+}
+
+print_summary() {
+    printf '\nSUMMARY   LOOPBACK=%s ALL_INTERFACES=%s SPECIFIC_INTERFACE=%s IPV6_ALL_INTERFACES=%s\n' \
+        "$LOOPBACK_COUNT" "$ALL_INTERFACES_COUNT" "$SPECIFIC_INTERFACE_COUNT" "$IPV6_ALL_INTERFACES_COUNT"
+}
+
 run_ss() {
     local args=(-H -l -n)
     [[ "$TCP" -eq 1 ]] && args+=(-t)
@@ -125,7 +157,7 @@ run_check() {
             process="$(process_name "$rest")"
             pid="$(process_pid "$rest")"
             binding="$(classify "$AUDIT_ADDRESS")"
-            printf '%-10s %-18s %-7s %-8s %-14s %s\n' "$proto" "$AUDIT_ADDRESS" "$AUDIT_PORT" "$pid" "$process" "$binding"
+            print_listener "$proto" "$AUDIT_ADDRESS" "$AUDIT_PORT" "$pid" "$process" "$binding"
         done < <(run_ss)
     elif command -v netstat >/dev/null 2>&1; then
         source="netstat"
@@ -144,11 +176,12 @@ run_check() {
                 process="${BASH_REMATCH[2]}"
             fi
             binding="$(classify "$AUDIT_ADDRESS")"
-            printf '%-10s %-18s %-7s %-8s %-14s %s\n' "$proto" "$AUDIT_ADDRESS" "$AUDIT_PORT" "$pid" "$process" "$binding"
+            print_listener "$proto" "$AUDIT_ADDRESS" "$AUDIT_PORT" "$pid" "$process" "$binding"
         done < <(run_netstat)
     else
         die "missing required command: ss or netstat"
     fi
+    print_summary
     [[ -n "$source" ]]
 }
 

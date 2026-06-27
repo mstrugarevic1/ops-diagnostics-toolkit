@@ -41,3 +41,16 @@ load helpers/test_helper
     [[ "$output" == *"netstat fallback"* ]]
     [[ "$output" == *"nginx"* ]]
 }
+
+@test "summary counts binding classes" {
+    run_script port-listener-audit.sh --processes --no-color
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"SUMMARY"*"LOOPBACK=1"*"ALL_INTERFACES=2"* ]]
+}
+
+@test "all-interfaces-only hides loopback listeners" {
+    run_script port-listener-audit.sh --all-interfaces-only --no-color
+    [ "$status" -eq 0 ]
+    [[ "$output" != *"127.0.0.1"* ]]
+    [[ "$output" == *"0.0.0.0"*"ALL_INTERFACES"* ]]
+}

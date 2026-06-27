@@ -1,23 +1,49 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
 
+args=" $* "
+
+if [[ "$args" == *" -i "* ]]; then
+    case "${DF_INODE_MODE:-healthy}" in
+    warning)
+        cat <<'EOF'
+Filesystem     Type  Inodes IUsed IFree IUse% Mounted on
+/dev/root      ext4  100000 83000 17000 83%   /
+EOF
+        ;;
+    critical)
+        cat <<'EOF'
+Filesystem     Type  Inodes IUsed IFree IUse% Mounted on
+/dev/root      ext4  100000 94000 6000  94%   /
+EOF
+        ;;
+    *)
+        cat <<'EOF'
+Filesystem     Type  Inodes IUsed IFree IUse% Mounted on
+/dev/root      ext4  100000 42000 58000 42%   /
+EOF
+        ;;
+    esac
+    exit 0
+fi
+
 case "${DF_MODE:-healthy}" in
 healthy)
     cat <<'EOF'
 Filesystem     Type 1024-blocks Used Available Capacity Mounted on
-/dev/root      ext4 100000      42000 58000     42%      /
+/dev/root      ext4 98G         41G  57G       42%      /
 EOF
     ;;
 warning)
     cat <<'EOF'
 Filesystem     Type 1024-blocks Used Available Capacity Mounted on
-/dev/root      ext4 100000      83000 17000     83%      /
+/dev/root      ext4 98G         81G  17G       83%      /
 EOF
     ;;
 critical)
     cat <<'EOF'
 Filesystem     Type 1024-blocks Used Available Capacity Mounted on
-/dev/root      ext4 100000      94000 6000      94%      /
+/dev/root      ext4 98G         92G  6G        94%      /
 EOF
     ;;
 esac

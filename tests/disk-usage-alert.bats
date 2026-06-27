@@ -30,3 +30,10 @@ load helpers/test_helper
     run_script_with_path disk-usage-alert.sh "$MISSING_PATH" --no-color
     [ "$status" -eq 3 ]
 }
+
+@test "inode warning is included when requested" {
+    DF_MODE=healthy DF_INODE_MODE=warning run_script disk-usage-alert.sh --warning 80 --critical 90 --inodes --no-color
+    [ "$status" -eq 1 ]
+    [[ "$output" == *"IUSED"* ]]
+    [[ "$output" == *"WARNING"* ]]
+}

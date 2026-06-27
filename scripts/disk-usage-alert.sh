@@ -1,16 +1,17 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
 
-VERSION="0.1.0"
+VERSION="0.2.0"
 NO_COLOR_FLAG=0
 WARNING=80
 CRITICAL=90
 FILESYSTEM=""
+CHECK_INODES=0
 EXCLUDE_TYPES=("tmpfs" "devtmpfs" "squashfs" "proc" "sysfs" "devfs" "overlay")
 
 usage() {
     cat <<'EOF'
-Usage: disk-usage-alert.sh [--warning PERCENT] [--critical PERCENT] [--filesystem PATH] [--exclude-type TYPE] [--no-color]
+Usage: disk-usage-alert.sh [--warning PERCENT] [--critical PERCENT] [--filesystem PATH] [--exclude-type TYPE] [--inodes] [--no-color]
 EOF
 }
 
@@ -67,6 +68,10 @@ parse_args() {
             EXCLUDE_TYPES+=("$2")
             shift 2
             ;;
+        --inodes)
+            CHECK_INODES=1
+            shift
+            ;;
         --no-color)
             NO_COLOR_FLAG=1
             shift
@@ -107,13 +112,36 @@ print_status() {
 }
 
 run_check() {
-    local df_args=(-P -T)
-    local exit_code=0 df_output line parsed fs type avail pct mount used_pct status code
+    local df_args=(-P -h -T)
+    local inode_args=(-P -i -T)
+    local exit_code=0 code df_output inode_output=""
     [[ -n "$FILESYSTEM" ]] && df_args+=("$FILESYSTEM")
+    [[ -n "$FILESYSTEM" ]] && inode_args+=("$FILESYSTEM")
     if ! df_output="$(df "${df_args[@]}" 2>&1)"; then
         die "df failed: $df_output"
     fi
+    if [[ "$CHECK_INODES" -eq 1 ]]; then
+        if ! inode_output="$(df "${inode_args[@]}" 2>&1)"; then
+            die "df inode check failed: $inode_output"
+        fi
+    fi
     printf '%-10s %-22s %-18s %-8s %s\n' "STATUS" "FILESYSTEM" "MOUNT" "USED" "AVAILABLE"
+    process_df_output "$df_output" || code="$?"
+    code="${code:-0}"
+    ((code > exit_code)) && exit_code="$code"
+    code=0
+    if [[ "$CHECK_INODES" -eq 1 ]]; then
+        printf '\n%-10s %-22s %-18s %-8s %s\n' "STATUS" "FILESYSTEM" "MOUNT" "IUSED" "IFREE"
+        process_df_output "$inode_output" || code="$?"
+        code="${code:-0}"
+        ((code > exit_code)) && exit_code="$code"
+    fi
+    return "$exit_code"
+}
+
+process_df_output() {
+    local df_output="$1"
+    local highest_code=0 line parsed fs type avail pct mount used_pct status code
     while IFS= read -r line; do
         [[ "$line" == Filesystem* ]] && continue
         parsed="$(awk '{mount=$7; for (i=8; i<=NF; i++) mount=mount " " $i; print $1 "\t" $2 "\t" $5 "\t" $6 "\t" mount}' <<<"$line")"
@@ -128,10 +156,10 @@ run_check() {
             status="OK"
         fi
         code="$(status_code "$status")"
-        ((code > exit_code)) && exit_code="$code"
+        ((code > highest_code)) && highest_code="$code"
         printf '%-10s %-22s %-18s %-8s %s\n' "$(print_status "$status")" "$fs" "$mount" "$pct" "$avail"
     done <<<"$df_output"
-    return "$exit_code"
+    return "$highest_code"
 }
 
 parse_args "$@"
