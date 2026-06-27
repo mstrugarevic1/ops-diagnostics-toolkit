@@ -5,7 +5,7 @@ PACKAGE := ops-diagnostics-toolkit
 DEB_ROOT := build/$(PACKAGE)_$(VERSION)_all
 DEB := dist/$(PACKAGE)_$(VERSION)_all.deb
 
-.PHONY: install-dev format format-check lint test version-check validate package-deb clean
+.PHONY: install-dev format format-check lint test smoke version-check validate package-deb clean
 
 install-dev:
 	@printf '%s\n' 'Install shellcheck, shfmt, bats, and dpkg-deb with your OS package manager.'
@@ -22,12 +22,16 @@ lint:
 test:
 	bats $(TESTS)
 
+smoke:
+	./scripts/system-pressure-report.sh --version >/dev/null
+	./scripts/system-pressure-report.sh --no-color >/dev/null
+
 version-check:
 	@for script in $(SCRIPTS); do \
 		grep -q 'VERSION="$(VERSION)"' "$$script" || { printf '%s\n' "$$script version does not match VERSION"; exit 1; }; \
 	done
 
-validate: format-check lint test version-check
+validate: format-check lint test smoke version-check
 
 package-deb: validate
 	rm -rf build dist
